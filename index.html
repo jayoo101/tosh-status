@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<!--
+  ═══════════════════════════════════════════════════════════════════════════
+   Tosh Protocol — public status page
+  ═══════════════════════════════════════════════════════════════════════════
+
+   This page is deliberately one file with no build step, no framework and no
+   third-party request except a read of the chain's own public RPC. It is
+   hosted away from Vercel on purpose: a status page that shares a failure
+   domain with the application it reports on is worthless in exactly the
+   incident where it matters, and P0 in INCIDENT_RESPONSE.md §0 explicitly
+   includes "malicious code in the frontend bundle".
+
+   TO UPDATE DURING AN INCIDENT: edit the three lines marked below, from
+   github.com in a phone browser if that is all you have. Commit. Pages
+   rebuilds in about a minute. Nothing else on this page needs touching.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tosh Protocol Status</title>
+<style>
+  :root {
+    --bg:#0b0d10; --fg:#e8eaed; --dim:#9aa3ad; --line:#232830;
+    --ok:#3fb950; --warn:#d29922; --bad:#f85149;
+  }
+  * { box-sizing:border-box }
+  body {
+    margin:0; padding:24px 18px 64px; background:var(--bg); color:var(--fg);
+    font:16px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    -webkit-text-size-adjust:100%;
+  }
+  main { max-width:720px; margin:0 auto }
+  h1 { font-size:18px; font-weight:600; letter-spacing:.02em; margin:0 0 24px }
+  h1 span { color:var(--dim); font-weight:400 }
+  .banner { border:1px solid var(--line); border-left-width:4px; padding:16px 18px; margin:0 0 24px }
+  .banner.operational  { border-left-color:var(--ok) }
+  .banner.investigating{ border-left-color:var(--warn) }
+  .banner.paused       { border-left-color:var(--bad) }
+  .banner.resolved     { border-left-color:var(--ok) }
+  .state { font-size:15px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; margin:0 0 8px }
+  .banner.operational  .state { color:var(--ok) }
+  .banner.investigating .state{ color:var(--warn) }
+  .banner.paused       .state { color:var(--bad) }
+  .banner.resolved     .state { color:var(--ok) }
+  .copy { margin:0 }
+  .detail { margin:10px 0 0; color:var(--fg) }
+  .stamp { margin:12px 0 0; color:var(--dim); font-size:13px }
+  section { border-top:1px solid var(--line); padding:20px 0 0; margin:24px 0 0 }
+  h2 { font-size:13px; font-weight:600; color:var(--dim); text-transform:uppercase;
+       letter-spacing:.08em; margin:0 0 14px }
+  .row { display:flex; justify-content:space-between; gap:16px; padding:7px 0 }
+  .row .k { color:var(--dim) }
+  .row .v { text-align:right; word-break:break-all }
+  .v.ok { color:var(--ok) } .v.bad { color:var(--bad) } .v.dim { color:var(--dim) }
+  .disagree { border:1px solid var(--bad); padding:14px 16px; margin:18px 0 0; color:var(--bad) }
+  ul { margin:0; padding-left:20px; color:var(--dim) } li { margin:6px 0 }
+  a { color:inherit; text-decoration:underline; text-underline-offset:3px }
+  footer { border-top:1px solid var(--line); margin:32px 0 0; padding:18px 0 0;
+           color:var(--dim); font-size:13px }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Tosh Protocol <span>· status</span></h1>
+
+<div id="banner" class="banner"><p class="state" id="state"></p><p class="copy" id="copy"></p><p class="detail" id="detail"></p><p class="stamp" id="stamp"></p></div>
+
+<section>
+  <h2>Read from the chain just now</h2>
+  <div class="row"><span class="k">Factory <code>paused()</code></span><span class="v dim" id="chainPaused">reading…</span></div>
+  <div class="row"><span class="k">Block height</span><span class="v dim" id="chainBlock">reading…</span></div>
+  <div class="row"><span class="k">Chain</span><span class="v dim" id="chainName"></span></div>
+  <div class="row"><span class="k">Factory</span><span class="v"><a id="factoryLink" href="#"><span id="factoryAddr"></span></a></span></div>
+  <div id="disagree" class="disagree" hidden></div>
+  <p class="stamp">
+    This block is not typed by a human. Your browser calls the chain's public
+    RPC directly and prints what it returns, so it cannot go stale or disagree
+    with the chain while the banner above is being written or forgotten.
+  </p>
+</section>
+
+<section>
+  <h2>What a pause does and does not do</h2>
+  <ul>
+    <li><strong>Blocks new entrants only.</strong> ETH already committed and
+        quota already granted are untouched.</li>
+    <li><strong>Does not reach a project that has already launched.</strong>
+        Trading on a launched pool continues.</li>
+    <li><strong>Cannot move your funds.</strong> The treasury has no
+        <code>withdraw</code>, <code>sweep</code>, <code>rescue</code> or
+        <code>delegatecall</code> path in its bytecode. Its only exit burns to
+        <code>0xdead</code>, and that address is hardcoded.</li>
+    <li>You do not have to take our word for any of this — the factory is
+        linked above and verified on the explorer.</li>
+  </ul>
+</section>
+
+<footer>
+  Updates during an incident are posted here first. This page is hosted
+  independently of the application it reports on.
+</footer>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+//  EDIT THESE THREE LINES DURING AN INCIDENT. NOTHING ELSE.
+//  Valid STATUS values: operational · investigating · paused · resolved
+// ══════════════════════════════════════════════════════════════════════════
+
+const STATUS  = 'operational'
+const DETAIL  = ''
+const UPDATED = '2026-09-04 13:35 UTC'
+
+// ══════════════════════════════════════════════════════════════════════════
+//  Below here is machinery. It does not need editing at 3am.
+// ══════════════════════════════════════════════════════════════════════════
+
+// Chain cutover: swap the two blocks at PM-C1/PM-C7. Until then this page
+// reports the same chain the frontend does, which is the rehearsal chain.
+const CHAIN = {
+  name:     'Robinhood testnet · 46630',
+  rpc:      'https://rpc.testnet.chain.robinhood.com',
+  explorer: 'https://explorer.testnet.chain.robinhood.com',
+  factory:  '0x2E690A91b383eDB21f6b5B4180Cc4a2C905C6BeA',
+}
+// const CHAIN = {
+//   name:     'Robinhood mainnet · 4663',
+//   rpc:      'https://rpc.mainnet.chain.robinhood.com',
+//   explorer: '<whatever the mainnet cutover names — it is not Etherscan>',
+//   factory:  '<the 4663 factory>',
+// }
+
+// The paused copy is the P0 playbook's Step 4 wording, verbatim. If the
+// playbook is reworded, reword it here in the same commit; a status page that
+// contradicts the runbook is how a responder ends up improvising.
+const COPY = {
+  operational:   'All systems operational.',
+  investigating: 'We are investigating a report. The protocol is not paused, and '
+               + 'deposits and withdrawals are unaffected. We will update this page '
+               + 'as we learn more.',
+  paused:        'Tosh Protocol is currently paused while we investigate a security '
+               + 'report. Existing deposits remain refundable. We will update this '
+               + 'page within 30 minutes.',
+  resolved:      'The incident is resolved and the protocol is unpaused. A written '
+               + 'post-mortem will follow on this page.',
+}
+
+const $ = id => document.getElementById(id)
+
+const status = COPY[STATUS] ? STATUS : 'investigating'
+$('banner').className = 'banner ' + status
+$('state').textContent = status
+$('copy').textContent  = COPY[status]
+$('stamp').textContent = 'Declared by the on-call commander · ' + UPDATED
+if (DETAIL) $('detail').textContent = DETAIL; else $('detail').hidden = true
+
+$('chainName').textContent   = CHAIN.name
+$('factoryAddr').textContent = CHAIN.factory
+$('factoryLink').href        = CHAIN.explorer + '/address/' + CHAIN.factory
+
+const rpc = (method, params) =>
+  fetch(CHAIN.rpc, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+  })
+    .then(r => r.json())
+    .then(j => { if (j.error) throw new Error(j.error.message); return j.result })
+
+;(async () => {
+  // paused() -> 0x5c975abb
+  try {
+    const raw = await rpc('eth_call', [{ to: CHAIN.factory, data: '0x5c975abb' }, 'latest'])
+    const isPaused = BigInt(raw) === 1n
+    const el = $('chainPaused')
+    el.textContent = String(isPaused)
+    el.className = 'v ' + (isPaused ? 'bad' : 'ok')
+
+    // A page can be forgotten mid-incident, or updated ahead of the
+    // transaction landing. Saying so is better than quietly showing one of
+    // the two and letting the reader assume they agree.
+    const declaredPaused = status === 'paused'
+    if (declaredPaused !== isPaused) {
+      const d = $('disagree')
+      d.hidden = false
+      d.textContent = declaredPaused
+        ? 'The banner above says paused, but the factory reports paused() = false. '
+        + 'Either the pause transaction has not landed yet, or it has already been '
+        + 'lifted and this page has not caught up. The chain is the authority.'
+        : 'The factory reports paused() = true, but the banner above has not been '
+        + 'updated to say so. Treat the chain as the authority and assume the '
+        + 'protocol is paused.'
+    }
+  } catch (err) {
+    const el = $('chainPaused')
+    el.textContent = 'could not reach the RPC'
+    el.className = 'v dim'
+    // Deliberately not fatal and deliberately not reassuring: an unreachable
+    // RPC is not evidence of health, so the row says what happened rather
+    // than defaulting to "false".
+  }
+
+  try {
+    const bn = await rpc('eth_blockNumber', [])
+    $('chainBlock').textContent = Number(BigInt(bn)).toLocaleString()
+    $('chainBlock').className = 'v'
+  } catch {
+    $('chainBlock').textContent = '—'
+  }
+})()
+</script>
+</body>
+</html>
