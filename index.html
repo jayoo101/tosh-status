@@ -83,6 +83,18 @@
 </section>
 
 <section>
+  <h2>If the app itself is unreachable</h2>
+  <p style="margin:0 0 12px">
+    The contracts do not depend on the website. Every user-side action —
+    including <strong>refund, which needs no signature, no API and nothing
+    from us</strong> — is reachable directly from the chain with
+    <code>cast</code>.
+  </p>
+  <div class="row"><span class="k">Manual interaction guide</span><span class="v"><a href="https://github.com/jayoo101/tosh-status/blob/main/MANUAL_INTERACTION.md">MANUAL_INTERACTION.md</a></span></div>
+  <div class="row"><span class="k">Factory on the explorer</span><span class="v"><a id="factoryLink2" href="#">verified source</a></span></div>
+</section>
+
+<section>
   <h2>What a pause does and does not do</h2>
   <ul>
     <li><strong>Blocks new entrants only.</strong> ETH already committed and
@@ -161,6 +173,7 @@ if (DETAIL) $('detail').textContent = DETAIL; else $('detail').hidden = true
 $('chainName').textContent   = CHAIN.name
 $('factoryAddr').textContent = CHAIN.factory
 $('factoryLink').href        = CHAIN.explorer + '/address/' + CHAIN.factory
+$('factoryLink2').href       = CHAIN.explorer + '/address/' + CHAIN.factory
 
 const rpc = (method, params) =>
   fetch(CHAIN.rpc, {
