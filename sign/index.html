@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<!--
+  ══════════════════════════════════════════════════════════════════════════════
+   Signer proof-of-control page — PM-D4.
+  ══════════════════════════════════════════════════════════════════════════════
+
+  Exists because there is no "sign a message" button in MetaMask's interface,
+  and asking three people to produce an EIP-191 signature by other means means
+  three different sets of instructions and at least one person stuck.
+
+  THE MESSAGE IS HARDCODED AND IS NOT READ FROM THE URL. Two reasons, both
+  deliberate:
+
+    1. If a signer types the message themselves, one stray space or a smart
+       quote produces a signature over different bytes. It fails verification,
+       which is correct behaviour and a wasted round trip with a human in it.
+
+    2. A page on this origin that signs whatever a query parameter tells it to
+       is a phishing tool wearing the project's own domain. There is no
+       parameter to pass, so there is nothing to craft a link with.
+
+  No build step, no dependencies, no CDN — same rule as the status page next to
+  it. Consequently there is no signature verification here: recovering an
+  address in the browser needs secp256k1 and this file will not be pulling in a
+  library to do it. The authoritative check is scripts/verifySignerCandidates.mjs
+  in the main repository, which recovers the address and refuses to proceed if
+  it does not match. This page collects; it does not validate.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tosh Protocol — signer address confirmation</title>
+<style>
+  :root {
+    --bg:#0b0d10; --fg:#e8eaed; --dim:#9aa3ad; --line:#232830;
+    --ok:#3fb950; --warn:#d29922; --bad:#f85149;
+  }
+  * { box-sizing:border-box }
+  body {
+    margin:0; padding:32px 20px 64px; background:var(--bg); color:var(--fg);
+    font:16px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    -webkit-text-size-adjust:100%;
+  }
+  main { max-width:720px; margin:0 auto }
+  h1 { font-size:18px; font-weight:600; letter-spacing:.02em; margin:0 0 8px }
+  h1 span { color:var(--dim); font-weight:400 }
+  .lede { color:var(--dim); font-size:14px; margin:0 0 32px }
+  h2 { font-size:13px; font-weight:600; color:var(--dim); text-transform:uppercase;
+       letter-spacing:.08em; margin:32px 0 12px }
+  section { border-top:1px solid var(--line); padding-top:4px }
+  p { margin:0 0 12px }
+  ul { margin:0 0 12px; padding-left:20px }
+  li { margin:0 0 6px }
+  a { color:inherit; text-decoration:underline; text-underline-offset:3px }
+  code { background:#151a20; padding:1px 5px; border-radius:3px; font-size:14px }
+  .msg {
+    background:#151a20; border:1px solid var(--line); border-left:3px solid var(--ok);
+    border-radius:4px; padding:16px; margin:0 0 16px; font-size:14px;
+    word-break:break-word; user-select:all;
+  }
+  button {
+    font:inherit; font-size:15px; background:#1f6feb; color:#fff; border:0;
+    border-radius:6px; padding:14px 22px; cursor:pointer; min-height:48px;
+  }
+  button:hover { background:#2a7ff0 }
+  button:disabled { background:#2d333b; color:var(--dim); cursor:default }
+  button.sec { background:#21262d; color:var(--fg); font-size:13px; padding:10px 16px; min-height:44px }
+  button.sec:hover { background:#2d333b }
+  .out {
+    display:none; background:#151a20; border:1px solid var(--line); border-radius:4px;
+    padding:16px; margin:16px 0 0; font-size:13px; word-break:break-all; white-space:pre-wrap;
+    user-select:all;
+  }
+  .out.on { display:block }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:12px }
+  .note { color:var(--dim); font-size:13px }
+  .bad { color:var(--bad) }
+  .ok { color:var(--ok) }
+  .warn { color:var(--warn) }
+  footer { border-top:1px solid var(--line); margin-top:40px; padding-top:16px;
+           color:var(--dim); font-size:13px }
+  label { display:block; color:var(--dim); font-size:12px; text-transform:uppercase;
+          letter-spacing:.08em; margin:16px 0 4px }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Tosh Protocol <span>· confirm your signer address</span></h1>
+<p class="lede">One click. Costs nothing, moves nothing, and cannot be used to
+move anything later.</p>
+
+<section>
+<h2>What this does, and what it cannot do</h2>
+<p>You are about to sign a sentence. Not a transaction — a sentence. The result
+is proof that the address you gave us is one you can actually sign with.</p>
+<ul>
+  <li><strong>No gas, no approval, no spending permission.</strong> A signed
+    message is not a transaction and confers nothing on anyone.</li>
+  <li><strong>Nobody will ever ask you for your seed phrase or private key</strong>
+    — not for this, not for anything, not by anyone entitled to ask. If someone
+    does, that is the whole signal you need.</li>
+  <li><strong>Check the text below before you approve it.</strong> Your wallet
+    will show you the same words. If they differ in any way, stop.</li>
+</ul>
+<p class="note">Why bother: an address nobody can sign with looks exactly like
+a working one, right up until the first time two signatures are needed in sixty
+seconds. That moment is not a good time to find out.</p>
+</section>
+
+<section>
+<h2>The message</h2>
+<div class="msg" id="msg"></div>
+<div class="row">
+  <button id="go">Connect wallet and sign</button>
+  <button class="sec" id="copymsg">Copy the text</button>
+</div>
+<p class="note" id="status" style="margin-top:12px"></p>
+<div class="out" id="out"></div>
+<div class="row" id="copyrow" style="display:none">
+  <button class="sec" id="copyout">Copy everything to send back</button>
+</div>
+</section>
+
+<section>
+<h2>If that button does nothing</h2>
+<p>It needs a browser wallet — MetaMask, Rabby, Frame, or a hardware wallet
+reached through one of those. On a phone, open this page inside your wallet
+app's own browser rather than Safari or Chrome.</p>
+<p>Two other routes, if that is easier:</p>
+<ul>
+  <li><strong>Etherscan.</strong> Go to
+    <a href="https://etherscan.io/verifiedSignatures" target="_blank" rel="noopener">etherscan.io/verifiedSignatures</a>,
+    press <em>Sign Message</em>, connect, paste the text above and sign. The
+    network your wallet happens to be on does not matter: this kind of
+    signature does not carry a chain, so one produced on Ethereum verifies
+    for Robinhood Chain unchanged.</li>
+  <li><strong>A Ledger and a terminal.</strong>
+    <code>cast wallet sign --ledger "&lt;the text above&gt;"</code></li>
+</ul>
+</section>
+
+<section>
+<h2>Then send back</h2>
+<p>Your <strong>address</strong> and the <strong>signature</strong> — the box
+above gives you both, formatted, with one button. Any channel is fine. Neither
+is secret; both are about to be public on chain anyway.</p>
+</section>
+
+<footer>
+Tosh Protocol · <a href="../">status page</a> ·
+this page is hosted separately from the application and shares none of its
+infrastructure
+</footer>
+
+</main>
+<script>
+// ══════════════════════════════════════════════════════════════════════════════
+//  The message. Single source of truth — scripts/verifySignerCandidates.mjs
+//  recovers against whatever string the collected JSON carries, and the block
+//  this page emits carries THIS one, so assembling the file from these outputs
+//  makes a mismatch between the three signers structurally impossible.
+//
+//  Not read from location.search. See the comment at the top of the file.
+// ══════════════════════════════════════════════════════════════════════════════
+const MESSAGE = 'I control this address and accept the role of Tosh Protocol Safe signer (2-of-3, Robinhood Chain 4663). Collected 2026-09-04.'
+
+const $ = id => document.getElementById(id)
+$('msg').textContent = MESSAGE
+
+const say = (text, cls) => { $('status').className = 'note ' + (cls || ''); $('status').textContent = text }
+
+$('copymsg').onclick = async () => {
+  try { await navigator.clipboard.writeText(MESSAGE); say('Text copied.', 'ok') }
+  catch { say('Could not reach the clipboard — select the box above and copy manually.', 'warn') }
+}
+
+const toHex = s => '0x' + Array.from(new TextEncoder().encode(s))
+  .map(b => b.toString(16).padStart(2, '0')).join('')
+
+$('go').onclick = async () => {
+  const eth = window.ethereum
+  if (!eth) {
+    say('No browser wallet found in this page. Use one of the two routes below.', 'bad')
+    return
+  }
+
+  $('go').disabled = true
+  say('Check your wallet — it is asking you to connect.')
+
+  try {
+    const accounts = await eth.request({ method: 'eth_requestAccounts' })
+    const address = accounts && accounts[0]
+    if (!address) throw new Error('no account was shared')
+
+    say('Now approve the signature. Read the words it shows you first.')
+    const signature = await eth.request({
+      method: 'personal_sign',
+      params: [toHex(MESSAGE), address],
+    })
+
+    // Emitted as a JSON object rather than two loose strings so it drops
+    // straight into safe-owners.json without anyone retyping a 132-character
+    // hex string, and so the message travels with the signature that covers it.
+    $('out').textContent = JSON.stringify({
+      name: '',
+      address,
+      signature,
+      message: MESSAGE,
+    }, null, 2)
+    $('out').classList.add('on')
+    $('copyrow').style.display = 'flex'
+    say('Signed. Send the box below back. Nothing was spent and nothing was approved.', 'ok')
+  } catch (err) {
+    const rejected = err && (err.code === 4001 || /reject|denied/i.test(err.message || ''))
+    say(rejected
+      ? 'You declined — nothing happened. Press the button again whenever you like.'
+      : 'That did not work: ' + (err && err.message ? err.message : String(err)),
+      rejected ? 'warn' : 'bad')
+    $('go').disabled = false
+  }
+}
+
+$('copyout').onclick = async () => {
+  try { await navigator.clipboard.writeText($('out').textContent); say('Copied. Send it back.', 'ok') }
+  catch { say('Could not reach the clipboard — select the box and copy manually.', 'warn') }
+}
+</script>
+</body>
+</html>
