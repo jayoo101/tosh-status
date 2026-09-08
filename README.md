@@ -50,7 +50,7 @@ endpoint that cannot be reached is not evidence of health.
 
 ## Chain cutover
 
-`CHAIN` at the top of the script points at the rehearsal chain (46630), which
-is what the frontend also reads until PM-C1. The mainnet block sits commented
-directly beneath it. Swapping them is PM-C7's sibling and belongs in the same
-sitting.
+`CHAIN` at the top of the script points at Robinhood mainnet (4663). The
+testnet block sits commented directly beneath it, so a revert is one edit.
+The frontend (`soat-frontend`) is the other half of PM-C7 and is not this
+repository.

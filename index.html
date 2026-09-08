@@ -131,19 +131,19 @@ const UPDATED = '2026-09-04 13:31 UTC'
 //  Below here is machinery. It does not need editing at 3am.
 // ══════════════════════════════════════════════════════════════════════════
 
-// Chain cutover: swap the two blocks at PM-C1/PM-C7. Until then this page
-// reports the same chain the frontend does, which is the rehearsal chain.
+// Chain cutover: swap the two blocks. The live block is mainnet 4663.
+// The testnet block sits commented beneath it so a revert is one edit.
 const CHAIN = {
-  name:     'Robinhood testnet · 46630',
-  rpc:      'https://rpc.testnet.chain.robinhood.com',
-  explorer: 'https://explorer.testnet.chain.robinhood.com',
-  factory:  '0x2E690A91b383eDB21f6b5B4180Cc4a2C905C6BeA',
+  name:     'Robinhood mainnet · 4663',
+  rpc:      'https://rpc.mainnet.chain.robinhood.com',
+  explorer: 'https://robinhoodchain.blockscout.com',
+  factory:  '0xBa9d2E86281b988225Eca383C375215912fb20B9',
 }
 // const CHAIN = {
-//   name:     'Robinhood mainnet · 4663',
-//   rpc:      'https://rpc.mainnet.chain.robinhood.com',
-//   explorer: '<whatever the mainnet cutover names — it is not Etherscan>',
-//   factory:  '<the 4663 factory>',
+//   name:     'Robinhood testnet · 46630',
+//   rpc:      'https://rpc.testnet.chain.robinhood.com',
+//   explorer: 'https://explorer.testnet.chain.robinhood.com',
+//   factory:  '0x2E690A91b383eDB21f6b5B4180Cc4a2C905C6BeA',
 // }
 
 // The paused copy is the P0 playbook's Step 4 wording, verbatim. If the
