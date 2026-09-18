@@ -97,7 +97,7 @@
 <section>
   <h2>What a pause does and does not do</h2>
   <ul>
-    <li><strong>Blocks new entrants only.</strong> ETH already committed and
+    <li><strong>Blocks new entrants only.</strong> BNB already committed and
         quota already granted are untouched.</li>
     <li><strong>Does not reach a project that has already launched.</strong>
         Trading on a launched pool continues.</li>
@@ -105,8 +105,13 @@
         <code>withdraw</code>, <code>sweep</code>, <code>rescue</code> or
         <code>delegatecall</code> path in its bytecode. Its only exit burns to
         <code>0xdead</code>, and that address is hardcoded.</li>
-    <li>You do not have to take our word for any of this — the factory is
-        linked above and verified on the explorer.</li>
+    <li>You do not have to take our word for the bytecode claim above — the
+        factory is linked on the explorer, where you can read its code.
+        <strong>Its Solidity source is not published there yet.</strong> That
+        sentence used to end "and verified on the explorer", which was true of
+        the Robinhood deployment and is not true of this one; publishing source
+        on BscScan is outstanding work and saying otherwise would be the one
+        kind of claim this page cannot afford to get wrong.</li>
   </ul>
 </section>
 
@@ -124,26 +129,40 @@
 // ══════════════════════════════════════════════════════════════════════════
 
 const STATUS  = 'operational'
-const DETAIL  = 'Q1 drill closed 2026-09-04. Factory unpaused; owner is the deployer again. Signers were Tom and Joe.'
-const UPDATED = '2026-09-04 13:31 UTC'
+const DETAIL  = 'Migrated to BNB Smart Chain. The only deployment is the testnet 97 rehearsal this page reads — there is no mainnet contract yet and nothing here holds value. Full lifecycle rehearsed 2026-09-17: genesis, launch, ladder listing, buy, ladder mint. Its keys are public; treat "operational" as a statement about the code, not about custody.'
+const UPDATED = '2026-09-18 09:30 UTC'
 
 // ══════════════════════════════════════════════════════════════════════════
 //  Below here is machinery. It does not need editing at 3am.
 // ══════════════════════════════════════════════════════════════════════════
 
-// Chain cutover: swap the two blocks. The live block is mainnet 4663.
-// The testnet block sits commented beneath it so a revert is one edit.
+// Chain cutover: swap the two blocks. The live block is BNB Smart Chain
+// TESTNET 97, which is the only place this protocol is deployed right now.
+//
+// ⚠ THE COMMENTED BLOCK IS NOW THE FUTURE, NOT THE REVERT. It used to be the
+//   other way round — live mainnet with testnet parked beneath it for a
+//   one-edit rollback — because the protocol was on Robinhood Chain 4663 and
+//   that was a real production deployment. It has left that chain entirely.
+//   Both Robinhood blocks are gone rather than commented, because keeping a
+//   dead chain one uncomment away from live is how a responder repoints this
+//   page at nothing at 3am.
+//
+//   Chain 56 has NOT been deployed, so its `factory` below is deliberately
+//   absent rather than guessed. Filling it in before the deploy would give
+//   this page an address to read paused() from that does not exist, which
+//   renders as "could not reach the RPC" and not as the misconfiguration it
+//   would be.
 const CHAIN = {
-  name:     'Robinhood mainnet · 4663',
-  rpc:      'https://rpc.mainnet.chain.robinhood.com',
-  explorer: 'https://robinhoodchain.blockscout.com',
-  factory:  '0x2920ca7E9fcD85491D699e1f9Ae2CAa65Cfb2892',
+  name:     'BNB Smart Chain testnet · 97',
+  rpc:      'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
+  explorer: 'https://testnet.bscscan.com',
+  factory:  '0xB224f26a323320376c0b4C6a3228533FA63E5bBd',
 }
 // const CHAIN = {
-//   name:     'Robinhood testnet · 46630',
-//   rpc:      'https://rpc.testnet.chain.robinhood.com',
-//   explorer: 'https://explorer.testnet.chain.robinhood.com',
-//   factory:  '0x2E690A91b383eDB21f6b5B4180Cc4a2C905C6BeA',
+//   name:     'BNB Smart Chain · 56',
+//   rpc:      'https://bsc-dataseed.bnbchain.org',
+//   explorer: 'https://bscscan.com',
+//   factory:  '',   // ← fill from broadcast/DeployMainnet.s.sol/56/run-latest.json
 // }
 
 // The paused copy is the P0 playbook's Step 4 wording, verbatim. If the
