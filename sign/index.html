@@ -164,8 +164,24 @@ infrastructure
 //  makes a mismatch between the three signers structurally impossible.
 //
 //  Not read from location.search. See the comment at the top of the file.
+//
+//  The chain and the date are both load-bearing. The chain makes this consent
+//  to a specific deployment rather than to the word "Tosh"; the date stops a
+//  signature collected for one round being replayed into the next. Changing
+//  either one therefore invalidates the round before it — the old signatures
+//  still prove control of their keys, but they stop recording acceptance of the
+//  role as now stated, and have to be collected again.
+//
+//  ⚠ This said "Robinhood Chain 4663" for the whole of the BSC migration, and
+//    the guard that exists to catch exactly this stayed green: checkStatusPage
+//    check 7 compared this string against safe-owners.example.json and they
+//    AGREED, both naming a chain the protocol had left. Two identical copies of
+//    a wrong statement is the one state a consistency check cannot see. Check 7b
+//    now reads the text as well, so the next time only the date is stale it says
+//    so. Edit both copies on the same day; 7a goes red the moment one moves
+//    alone.
 // ══════════════════════════════════════════════════════════════════════════════
-const MESSAGE = 'I control this address and accept the role of Tosh Protocol Safe signer (2-of-3, Robinhood Chain 4663). Collected 2026-09-04.'
+const MESSAGE = 'I control this address and accept the role of Tosh Protocol Safe signer (2-of-3, BNB Smart Chain 56). Collected 2026-09-18.'
 
 const $ = id => document.getElementById(id)
 $('msg').textContent = MESSAGE
