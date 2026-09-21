@@ -50,16 +50,16 @@ endpoint that cannot be reached is not evidence of health.
 
 ## Chain cutover
 
-`CHAIN` at the top of the script points at BNB Smart Chain **testnet** (97),
-which is the only chain this protocol is deployed on. The mainnet (56) block
-sits commented directly beneath it with its `factory` left empty, because that
-deploy has not happened.
+`CHAIN` at the top of the script points at BNB Smart Chain **mainnet** (56),
+deployed 2026-09-21, which is where the contracts holding deposits live. The
+testnet (97) block sits commented directly beneath it as the rehearsal it is.
 
-So the direction of that swap is the reverse of what it used to be. The live
-block was Robinhood mainnet 4663 with a testnet block parked beneath it for a
-one-edit rollback; the protocol has since left Robinhood Chain outright, and
-both of those blocks are deleted rather than commented — a dead chain one
-uncomment away from live is a trap, not a fallback.
+That commented block is not a rollback. There is nothing on 97 to roll back
+to, and uncommenting it during a mainnet incident would show a healthy
+contract while the one holding deposits was not — the exact failure this page
+exists to prevent. The Robinhood mainnet 4663 blocks were deleted rather than
+commented for the same reason taken further: a dead chain one uncomment away
+from live is a trap, not a fallback.
 
 The frontend (`soat-frontend`) is the other half of PM-C7 and is not this
 repository. `scripts/checkStatusPage.mjs` over there fails CI if this page

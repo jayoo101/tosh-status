@@ -54,17 +54,23 @@ rather than merely read oddly:
   address matching the mask `0x20CC`. Infinity declares hook permissions as a
   bitmap instead of encoding them in the address, the factory's bits check is
   gone, and `InvalidHookSalt` no longer exists. Any salt works. See §7.
-- **The factory's source is not published on BscScan.** v5.0 told you the
-  factory was verified and you could read what you were about to send money
-  to. On this chain the *treasury* is verified and the *factory* is not. §0
-  says what to do instead.
+- **The factory's source IS published on BscScan again.** v5.0 said it was,
+  the 97 rehearsal made that false, and this guide said so. On mainnet it is
+  true once more: factory, ladder treasury, hook implementation and token
+  implementation all carry BscScan's Exact Match badge. One library does not
+  and structurally cannot; §0 says which, why, and why it costs you nothing.
 
 Denominations are BNB everywhere. Function and error names are unchanged where
 the contract still spells them the old way — those are ABI, not prose, and
 renaming them here would just make the commands fail.
 
-**The only deployment is testnet 97.** There is no mainnet Tosh contract. What
-follows works, and it works on a chain where nothing is at stake.
+**This guide is now about mainnet, where money is at stake.** Tosh deployed to
+BNB Smart Chain 56 on 2026-09-21 and the addresses in §0 are the ones holding
+deposits. Every earlier version of this file described the testnet 97
+rehearsal and told you to keep real funds out of its reach; that sentence is
+gone because the reason for it is gone, not because the risk is. Testnet 97
+still exists and is no longer what any address or command below refers to — if
+you run these against 97, nothing will match.
 
 ---
 
@@ -74,9 +80,9 @@ Install Foundry (`foundryup`), then set your environment. Every command below
 assumes these are exported.
 
 ```bash
-export RPC=https://data-seed-prebsc-1-s1.bnbchain.org:8545
-export FACTORY=0xB224f26a323320376c0b4C6a3228533FA63E5bBd
-export TREASURY=0x79de222644E8BBeea6FC55815CCBE9FF136D7674
+export RPC=https://bsc-dataseed.bnbchain.org
+export FACTORY=0x20dE906A96FfB89BE6fd6267A0876A68017792F7
+export TREASURY=0x7105d36715e4d2bFbBEaD2B7c085e6CDE6f85a4B
 export HOOK=0x<project-hook-address>     # the project you care about
 export TOKEN=0x<project-token-address>
 export ME=0x<your-wallet-address>
@@ -99,16 +105,29 @@ that are not the app, so you can cross-check rather than take either on faith.
 If those two disagree, do not deposit, and treat it as a report worth sending
 us.
 
-> **You cannot read the factory's Solidity on BscScan, and v5.0 said you
-> could.** Its source is unpublished on chain 97; the treasury's is published
-> (compiler `v0.8.26+commit.8a97fa7a`). So the cross-check above is on the
-> *address*, not on the source. What is available instead needs no explorer
-> and no trust in us: the deploy artefact at
-> `broadcast/Deploy.s.sol/97/run-latest.json` in the protocol repository
-> records the address and the commit, and the factory's own
-> `HOOK_CREATION_CODEHASH` can be recomputed from that source tree. Publishing
-> the factory is a deliberate non-priority on a rehearsal chain whose keys are
-> public; on mainnet it would not be optional.
+> **You can read the factory's Solidity on BscScan.** On mainnet the factory,
+> the ladder treasury, the hook implementation and the token implementation
+> are all published with the Exact Match badge, so the cross-check above can
+> be made against the *source* and not only against the address.
+>
+> One library, `HookDeployLib`, is not published and cannot be. It was created
+> through the deterministic CREATE2 deployer, so the explorer has no creation
+> transaction to compare against and falls back to the runtime code — where
+> `viaIR` has written the library's own address into an immutable that no
+> recompilation can reproduce. Nothing is hidden by this: `HookDeployLib.sol`
+> is one of the source files inside the factory's own verified sources, so
+> publishing the factory published the library's code too.
+>
+> Two things on the factory's page look like defects and are not. A yellow
+> banner reads *"This contract contains unverified libraries: HookDeployLib"*
+> — that is the paragraph above. And *"Heuristics suggest this may be a proxy
+> contract"* is BscScan inferring from the clone-deploying code; there is no
+> proxy in front of the factory.
+>
+> If you would rather trust no explorer at all, the deploy artefact at
+> `broadcast/DeployMainnet.s.sol/56/run-latest.json` in the protocol
+> repository records the address and the commit, and the factory's own
+> `HOOK_CREATION_CODEHASH` can be recomputed from that source tree.
 
 ### Reads vs writes
 
@@ -309,8 +328,8 @@ so let `cast` estimate first, and only pin `--gas-limit` if estimation fails.
 > `addLadderToken` reads the pool's TWAP and reverts `TwapNotMature` until a
 > full `TWAP_WINDOW` (30 minutes) of price history exists. Attempting it in the
 > same transaction as `launch()` does not work — that is not a theory, it is
-> what the 2026-09-17 rehearsal on this chain did, saw refused, and retried
-> successfully half an hour later.
+> what the 2026-09-17 rehearsal on testnet 97 did, saw refused, and retried
+> successfully half an hour later. The contract is the same one now on 56.
 
 ---
 
@@ -483,8 +502,8 @@ cast call $HOOK "getPoolKey()" --rpc-url $RPC
 >
 > You can settle it from the raw return without decoding anything: the call
 > above answers with `2 + 64 × slots` hex characters, so **386 characters means
-> six slots and Infinity**, where 322 would mean five and V4. On the chain-97
-> rehearsal hook it is 386.
+> six slots and Infinity**, where 322 would mean five and V4. Measured on a
+> registered mainnet hook on 2026-09-21: 386.
 
 Pool parameters are `POOL_FEE = 3000` (0.30%) and `TICK_SPACING = 200`. A
 1.00% tax applies on hook-routed swaps (`TAX_BPS = 100`), so total friction is
@@ -746,7 +765,7 @@ Before signing anything:
 
 1. **Verify the factory address** against the status page *and* the explorer,
    and if you have the protocol repository, against
-   `broadcast/Deploy.s.sol/97/run-latest.json`. Everything else derives from
+   `broadcast/DeployMainnet.s.sol/56/run-latest.json`. Everything else derives from
    it. (v5.0 pointed at `factoryDeployments.ts`, which does not exist — the
    addresses are read out of Foundry's own broadcast logs.)
 2. **Verify the hook is registered** — `registeredHooks(hook)` must be `true`.
@@ -761,16 +780,39 @@ Before signing anything:
    round means *not yet*, and says nothing about whether the round hit its
    soft cap; work out the 7-day date from §1 and check back then.
 
-> **And one that only applies to chain 97:** this deployment's `owner`,
-> `pogSigner` and `platformTreasury` are all the same address, and its private
-> key is public — it was committed to the protocol repository and pushed.
-> Anyone can pause it, sign PoG attestations for it, or collect its platform
-> fees. That is acceptable because it is a rehearsal holding nothing, and it is
-> the reason you should not put real money anywhere in this guide's reach.
+> **And the one that inverted at the cutover.** On testnet 97 this
+> deployment's `owner`, `pogSigner` and `platformTreasury` were a single
+> address whose private key was public — committed to the protocol repository
+> and pushed — so anyone could pause it, sign PoG attestations for it, or
+> collect its platform fees. That is why every earlier version of this guide
+> ended by telling you to keep real money out of its reach.
+>
+> None of it is true on 56. `owner` is a 2-of-3 Gnosis Safe at
+> `0x02DE4629129D104C63329D13A6Ca67E43db7B310`, and it owns both the factory
+> and the ladder treasury; the deploying key transferred ownership through
+> `Ownable2Step`, the Safe accepted, and that key now holds nothing.
+> `pogSigner` is a separate address, `0xc7B7CB00A4B5CBe832Caa7369FbcBbd6385E581D`,
+> which only ever produces off-chain EIP-191 signatures and carries no
+> on-chain privilege at all.
+>
+> Do not take that from this file. It is four reads and they cost nothing:
+>
+> ```bash
+> cast call $FACTORY  "owner()(address)"            --rpc-url $RPC
+> cast call $TREASURY "owner()(address)"            --rpc-url $RPC
+> cast call $FACTORY  "platformTreasury()(address)" --rpc-url $RPC
+> cast call $FACTORY  "pogSigner()(address)"        --rpc-url $RPC
+> ```
+>
+> The first three must all answer with the Safe above, and the fourth must not.
+> If any of them answers with something else, stop, deposit nothing, and treat
+> it as a report worth sending us.
 
 ---
 
-*Last updated: 2026-09-18 (v5.1 — BNB Smart Chain, PancakeSwap Infinity. v5.0
-described Robinhood Chain and Uniswap V4; every changed fact is flagged inline
-rather than silently replaced, because a reader who followed the old version
-deserves to know which of their assumptions broke.)*
+*Last updated: 2026-09-21 (v6.0 — BNB Smart Chain **mainnet 56**. v5.1
+described the testnet 97 rehearsal and v5.0 described Robinhood Chain and
+Uniswap V4; every changed fact is flagged inline rather than silently
+replaced, because a reader who followed an old version deserves to know which
+of their assumptions broke. The two that matter most this time: the addresses
+in §0 are all different, and the custody warning at the end of §9 reversed.)*
