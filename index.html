@@ -129,40 +129,40 @@
 // ══════════════════════════════════════════════════════════════════════════
 
 const STATUS  = 'operational'
-const DETAIL  = 'Migrated to BNB Smart Chain. The only deployment is the testnet 97 rehearsal this page reads — there is no mainnet contract yet and nothing here holds value. Full lifecycle rehearsed 2026-09-17: genesis, launch, ladder listing, buy, ladder mint. Its keys are public; treat "operational" as a statement about the code, not about custody.'
-const UPDATED = '2026-09-18 09:30 UTC'
+const DETAIL  = 'Live on BNB Smart Chain mainnet 56 since 2026-09-21; this page now reads the contract that holds deposits. Both the factory and the ladder treasury are owned by a 2-of-3 Safe, and the deploying key holds nothing. Source is published on BscScan for every contract except HookDeployLib, which cannot be verified there for a structural reason and whose source is readable inside the factory\'s own verified sources. Testnet 97 remains as a rehearsal and is not what this page reports. "Operational" is a statement about liveness, not an audit.'
+const UPDATED = '2026-09-21 15:35 UTC'
 
 // ══════════════════════════════════════════════════════════════════════════
 //  Below here is machinery. It does not need editing at 3am.
 // ══════════════════════════════════════════════════════════════════════════
 
 // Chain cutover: swap the two blocks. The live block is BNB Smart Chain
-// TESTNET 97, which is the only place this protocol is deployed right now.
+// MAINNET 56, deployed 2026-09-21 and holding real value.
 //
-// ⚠ THE COMMENTED BLOCK IS NOW THE FUTURE, NOT THE REVERT. It used to be the
-//   other way round — live mainnet with testnet parked beneath it for a
-//   one-edit rollback — because the protocol was on Robinhood Chain 4663 and
-//   that was a real production deployment. It has left that chain entirely.
-//   Both Robinhood blocks are gone rather than commented, because keeping a
-//   dead chain one uncomment away from live is how a responder repoints this
-//   page at nothing at 3am.
+// ⚠ THE COMMENTED BLOCK IS THE REHEARSAL, NOT THE REVERT. Testnet 97 is parked
+//   beneath so a responder can read it deliberately, never so that one
+//   uncomment "rolls back" an incident — there is nothing on 97 to roll back
+//   to, and repointing this page at the rehearsal during a mainnet incident
+//   would show a healthy contract while the one holding deposits was not.
+//   Both Robinhood 4663 blocks are gone rather than commented, for that same
+//   reason taken to its conclusion: a dead chain one uncomment away from live
+//   is how a responder repoints this page at nothing at 3am.
 //
-//   Chain 56 has NOT been deployed, so its `factory` below is deliberately
-//   absent rather than guessed. Filling it in before the deploy would give
-//   this page an address to read paused() from that does not exist, which
-//   renders as "could not reach the RPC" and not as the misconfiguration it
-//   would be.
+//   The `factory` below is not free-form. `checkStatusPage.mjs` in tosh-core
+//   compares it against whatever `broadcast/*/56/run-latest.json` last
+//   created, so a redeploy that does not reach this line fails that repo's CI
+//   rather than going quiet here.
 const CHAIN = {
-  name:     'BNB Smart Chain testnet · 97',
-  rpc:      'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
-  explorer: 'https://testnet.bscscan.com',
-  factory:  '0xB224f26a323320376c0b4C6a3228533FA63E5bBd',
+  name:     'BNB Smart Chain · 56',
+  rpc:      'https://bsc-dataseed.bnbchain.org',
+  explorer: 'https://bscscan.com',
+  factory:  '0x20dE906A96FfB89BE6fd6267A0876A68017792F7',
 }
 // const CHAIN = {
-//   name:     'BNB Smart Chain · 56',
-//   rpc:      'https://bsc-dataseed.bnbchain.org',
-//   explorer: 'https://bscscan.com',
-//   factory:  '',   // ← fill from broadcast/DeployMainnet.s.sol/56/run-latest.json
+//   name:     'BNB Smart Chain testnet · 97',
+//   rpc:      'https://data-seed-prebsc-1-s1.bnbchain.org:8545',
+//   explorer: 'https://testnet.bscscan.com',
+//   factory:  '0xB224f26a323320376c0b4C6a3228533FA63E5bBd',
 // }
 
 // The paused copy is the P0 playbook's Step 4 wording, verbatim. If the
