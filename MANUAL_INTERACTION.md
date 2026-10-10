@@ -1,6 +1,6 @@
 # Tosh Protocol — Manual Interaction Guide
 
-**Version:** v5.1 — BNB Smart Chain / PancakeSwap Infinity
+**Version:** v7.0 — BNB Smart Chain / PancakeSwap Infinity (two factories; see the first section)
 **Audience:** Users and power users operating **without** the Tosh frontend
 **Status page:** <https://jayoo101.github.io/tosh-status/> — §6b of the
 incident playbook links here from there during a frontend outage
@@ -28,6 +28,78 @@ incident playbook links here from there during a frontend outage
 > nothing below needs anything you cannot reach.
 
 ---
+
+## Since 2026-10-10 — two factories, and which one your project is on
+
+New launches moved to a factory **priced in WBNB** on 2026-10-10. Everything
+from "Read this before the rest" onward was written against the first mainnet
+factory and still applies, word for word, to projects launched there.
+
+| | Address |
+|---|---|
+| WBNB factory (new launches; deployed in block 126796453) | `0xb5D1bBB16fED6048920a78CEEd15fd00b998d362` |
+| WBNB ladder treasury | `0xE5743620aBdE7A76b1683Be9f607Be6Cf5bbF83d` |
+| WBNB, the quote asset (18 decimals) | `0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c` |
+| First factory (paused for new launches; its projects carry on) | `0x20dE906A96FfB89BE6fd6267A0876A68017792F7` |
+| First ladder treasury | `0x7105d36715e4d2bFbBEaD2B7c085e6CDE6f85a4B` |
+
+A third factory, `0xBCa66f7382aaC0C6EE2b833fc2072CA607367f2c`, was deployed
+on 2026-10-08, never launched a project and is paused. Nothing of yours is
+on it.
+
+**Which factory is yours.** Ask each one whether it deployed your hook; only
+one answers `true`:
+
+```bash
+cast call 0xb5D1bBB16fED6048920a78CEEd15fd00b998d362 "registeredHooks(address)(bool)" $HOOK --rpc-url $RPC
+cast call 0x20dE906A96FfB89BE6fd6267A0876A68017792F7 "registeredHooks(address)(bool)" $HOOK --rpc-url $RPC
+```
+
+If it is the first factory, set `FACTORY` and `TREASURY` as in §0 below and
+use the guide unchanged. If it is the WBNB factory, set:
+
+```bash
+export FACTORY=0xb5D1bBB16fED6048920a78CEEd15fd00b998d362
+export TREASURY=0xE5743620aBdE7A76b1683Be9f607Be6Cf5bbF83d
+export WBNB=0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c
+```
+
+and read the rest of the guide with these differences:
+
+- **Depositing.** Either send BNB and let the factory wrap it,
+  `depositNative(address hook, address referrer)` with `--value`, or approve
+  WBNB to the **factory** (it pulls straight into your project's hook) and
+  call `deposit(address hook, address referrer, uint256 amount)`. Amounts
+  are in wei, 18 decimals. `eligibility(address,address)` is unchanged.
+
+  ```bash
+  cast send $FACTORY "depositNative(address,address)" $HOOK 0x0000000000000000000000000000000000000000 \
+    --value 0.1ether --rpc-url $RPC $SIGNER
+  ```
+
+- **Refunds and referral commission are paid in WBNB**, not native BNB.
+  `refund()`, `claimGenesis()` and `claimReferralReward()` are called on the
+  hook exactly as below. To turn WBNB back into BNB:
+  `cast send $WBNB "withdraw(uint256)" <amount> --rpc-url $RPC $SIGNER`.
+
+- **When refunds open** is read from the hook, as always:
+  `canRefund()(bool)`. It is `false` while the round is open and after a
+  launch; after the deadline it is `true` at once if the raise is too small
+  to carry a ladder (`ladderViable()` is `false`), and otherwise once seven
+  days pass without the pool being opened.
+
+- **Opening the pool is not the creator's call.** `launch()` on the hook
+  only accepts the factory, and the factory's `launch(address hook)` only
+  accepts its owner: `ToshLaunchGateway`
+  `0xbD378b7A30adf3AdBcC4D6369206472232a75dD3`, which any signer of the
+  platform's 2-of-3 Safe `0x02DE4629129D104C63329D13A6Ca67E43db7B310` can
+  use. Ignore the `creator()` instructions in §3 for these projects. If
+  nobody opens the pool, the seven-day refund above is what protects you.
+
+- **There is no launch fee and no soft cap** on this factory; the round has
+  a hard cap (`hardCap()`) and a per-wallet cap (`perWalletCap()`). §7 does
+  not apply either: `createLaunch` accepts only the factory's owner, the
+  gateway above.
 
 ## Read this before the rest — what changed in v5.1
 
