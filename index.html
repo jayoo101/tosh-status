@@ -129,8 +129,8 @@
 // ══════════════════════════════════════════════════════════════════════════
 
 const STATUS  = 'operational'
-const DETAIL  = 'Live on BNB Smart Chain mainnet 56 since 2026-09-21; this page now reads the contract that holds deposits. Both the factory and the ladder treasury are owned by a 2-of-3 Safe, and the deploying key holds nothing. Source is published on BscScan for every contract except HookDeployLib, which cannot be verified there for a structural reason and whose source is readable inside the factory\'s own verified sources. Testnet 97 remains as a rehearsal and is not what this page reports. "Operational" is a statement about liveness, not an audit.'
-const UPDATED = '2026-09-21 15:35 UTC'
+const DETAIL  = 'Live on BNB Smart Chain mainnet 56 since 2026-09-21. On 2026-10-10 new launches moved to a factory priced in BNB (WBNB); this page reads that factory, which is the contract that holds new deposits. The earlier factories are paused for new launches, and their existing projects keep trading and settling as before. The new factory sits behind a launch gateway controlled by a 2-of-3 Safe, the ladder treasury is owned by the same Safe, and the deploying key holds nothing. BscScan source verification for the 2026-10-10 contracts is still pending. "Operational" is a statement about liveness, not an audit.'
+const UPDATED = '2026-10-10 09:55 UTC'
 
 // ══════════════════════════════════════════════════════════════════════════
 //  Below here is machinery. It does not need editing at 3am.
@@ -156,7 +156,7 @@ const CHAIN = {
   name:     'BNB Smart Chain · 56',
   rpc:      'https://bsc-dataseed.bnbchain.org',
   explorer: 'https://bscscan.com',
-  factory:  '0x20dE906A96FfB89BE6fd6267A0876A68017792F7',
+  factory:  '0xb5D1bBB16fED6048920a78CEEd15fd00b998d362',
 }
 // const CHAIN = {
 //   name:     'BNB Smart Chain testnet · 97',
